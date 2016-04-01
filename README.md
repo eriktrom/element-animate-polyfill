@@ -8,12 +8,15 @@
 1. Run `npm install`
 
 ## Development
-1. Run `webpack`
+1. Modify and `src/` and `test/` files 
+1. Run `npm run bundle`
+
+## Testing (auto)
+1. Run `npm run autotest`
 1. Modify and `src/` and `test/` files 
 
-## Testing (NOT WORKING YET)
-1. Run `karma start`
-1. Modify and `src/` and `test/` files 
+## Testing (cli)
+1. Run `npm run test`
 
 ## Demos
 1. Run `npm run demo`
