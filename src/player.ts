@@ -215,7 +215,7 @@ export class Player {
             value = roundDecimal(value, 2);
             break;
           case CssValueType.Pixel:
-            value = Math.floor(value) + PX;
+            value = Math.round(value) + PX;
             break;
           default:
             throw new Error('Only numeric style values are supported now');

@@ -9,7 +9,7 @@
 
 ## Development
 1. Modify and `src/` and `test/` files 
-1. Run `npm run bundle`
+1. Run `npm run watch`
 
 ## Testing (auto)
 1. Run `npm run autotest`
@@ -20,3 +20,7 @@
 
 ## Demos
 1. Run `npm run demo`
+
+## Bundling (cli)
+1. Run `npm run bundle`
+1. Look in `dist/` for the packaged files
