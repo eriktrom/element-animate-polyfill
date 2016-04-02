@@ -1,16 +1,22 @@
-import { Player } from "./player";
+import {Player, PlayerOptions} from "./player";
+import {isNumber} from "./util";
 
 export class Animation {
-  keyframes: Object;
-  options: number;
+  options: PlayerOptions;
 
-  constructor (keyframes : Object, options : number) {
-    this.keyframes = keyframes;
-    this.options = options;
+  constructor(public keyframes: {[key: string]: string}[], options: any) {
+    if (isNumber(options)) {
+      options = { duration: options };
+    }
+    this.options = new PlayerOptions(options);
   }
 
-  start (element) {
-    var player = new Player(element, this.keyframes, this.options);
+  create(element: HTMLElement): Player {
+    return new Player(element, this.keyframes, this.options);
+  }
+
+  start(element): Player {
+    var player = this.create(element);
     player.play();
     return player;
   }
