@@ -1,4 +1,4 @@
-export class AnimationClock {
+export class BrowserClock {
   public startingTime = 0;
 
   raf(fn) {

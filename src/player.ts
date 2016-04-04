@@ -1,4 +1,5 @@
-import {AnimationClock} from './clock';
+import {BrowserClock} from './browser_clock.ts';
+import {BrowserStyles} from './browser_styles';
 import {roundDecimal, toInt, toFloat, isNumber, isPresent} from './util';
 
 var $0 = 48;
@@ -69,13 +70,13 @@ function findDimensionalSuffix(value) {
   }
 }
 
-function computePxValue(testElement: HTMLElement, prop: string, value: string, measurement: string): number {
+function computePxValue(browserStyles: BrowserStyles, testElement: HTMLElement, prop: string, value: string, measurement: string): number {
   var isEM = measurement == 'em';
   if (isEM) {
     testElement.style[prop] = value;
   }
 
-  var pxValue = toFloat(window.getComputedStyle(testElement)[prop]);
+  var pxValue = toFloat(browserStyles.getComputedStyle(testElement, prop));
   if (isEM) {
     testElement.style[prop] = null;
   } else{
@@ -89,16 +90,13 @@ class NormalizedKeyframeStyle {
   constructor(public property: string, public value: number|string, public type: CssValueType) {}
 }
 
-function normalizeStyles(element:HTMLElement, styles: {[key: string]: string}): NormalizedKeyframeStyle[] {
+function normalizeStyles(browserStyles: BrowserStyles, element:HTMLElement, styles: {[key: string]: string}): NormalizedKeyframeStyle[] {
   var newStyles = [];
   for (var prop in styles) {
     var type;
     var value: any = styles[prop];
     if (isDimensionalProperty(prop)) {
-      if (isNumber(value)) {
-        measurement = PX;
-        value += measurement;
-      } else {
+      if (!isNumber(value)) {
         var measurement = findDimensionalSuffix(value);
         if (!isPresent(measurement)) {
           throw new Error('Please set a suffix for ' + prop + ':' + value);
@@ -107,7 +105,7 @@ function normalizeStyles(element:HTMLElement, styles: {[key: string]: string}): 
         if (measurement == PX) {
           value = toFloat(value);
         } else {
-          value = computePxValue(element, prop, value, measurement);
+          value = computePxValue(browserStyles, element, prop, value, measurement);
         }
       }
       type = CssValueType.Pixel;
@@ -125,15 +123,28 @@ export class PlayerOptions {
   public duration: number;
   public delay: number;
   public easing: string;
+  public fillMode: string;
 
-  constructor ({duration, delay, easing}: {
+  constructor ({duration, delay, easing, fillMode}: {
     duration: number|string,
     delay?: number|string,
-    easing?: string
+    easing?: string,
+    fillMode?: string
   }) {
     this.duration = toInt(duration);
     this.delay = isPresent(delay) ? toInt(delay) : 0;
     this.easing = isPresent(easing) ? easing : 'linear';
+
+    switch (fillMode) {
+      case 'forwards':
+      case 'backwards':
+      case 'both':
+        this.fillMode = fillMode;
+        break;
+      default:
+        this.fillMode = 'none';
+        break;
+    }
   }
 }
 
@@ -141,22 +152,24 @@ export class Player {
   private _currentTime: number = 0;
   private _startingTimestamp: number = 0;
   private _properties: any[] = [];
+  private _initialValues: {[prop: string]: string};
   private _keyframes: {[key: string]: string|number}[];
 
   onfinish: Function = () => {};
   playing: boolean;
 
-  public clock = new AnimationClock();
-
   constructor(private _element: HTMLElement,
               keyframes: {[key: string]: string}[],
-              private _options: PlayerOptions) {
+              private _options: PlayerOptions,
+              private _clock: BrowserClock,
+              private _styles: BrowserStyles) {
 
-    var formattedKeyframes = keyframes.map(keyframe => normalizeStyles(_element, keyframe));
+    var formattedKeyframes = keyframes.map(keyframe => normalizeStyles(_styles, _element, keyframe));
 
     var firstKeyframe = formattedKeyframes[0];
     firstKeyframe.forEach((entry) => {
-      this._properties.push([entry.property, entry.type]);
+      var prop = entry.property;
+      this._properties.push([prop, entry.type]);
     });
 
     this._keyframes = formattedKeyframes.map(entry => {
@@ -178,17 +191,30 @@ export class Player {
 
   play() {
     if (this.playing) return;
+    this._initialValues = {};
+    this._properties.forEach(entry => {
+      var prop = entry[0];
+      this._initialValues[prop] = this._styles.readStyle(this._element, prop);
+    });
     this.playing = true;
-    this._startingTimestamp = this.clock.now();
+    this._startingTimestamp = this._clock.now();
     this.tick();
   }
 
   _onfinish() {
+    var fillMode = this._options.fillMode;
+    if (fillMode == 'none' || fillMode == 'backwards') {
+      this._cleanup();
+    }
     this.onfinish();
   }
 
-  _calculate(startVal, diff): number {
-    return this._currentTime / this.totalTime * diff + startVal;
+  _oncancel() {
+    this._cleanup();
+  }
+
+  _calculate(currentTime: number, totalTime: number, startVal: number, diff: number): number {
+    return currentTime / totalTime * diff + startVal;
   }
 
   _computeProperties(currentTime: number): string[] {
@@ -209,17 +235,18 @@ export class Player {
         value = endVal;
       } else {
         var diff = <number>endVal - <number>startVal;
-        value = this._calculate(startVal, diff);
-        switch (type) {
-          case CssValueType.Numeric:
-            value = roundDecimal(value, 2);
-            break;
-          case CssValueType.Pixel:
-            value = Math.round(value) + PX;
-            break;
-          default:
-            throw new Error('Only numeric style values are supported now');
-        }
+        value = this._calculate(currentTime, this.totalTime, <number>startVal, diff);
+      }
+
+      switch (type) {
+        case CssValueType.Numeric:
+          value = roundDecimal(value, 2);
+          break;
+        case CssValueType.Pixel:
+          value = Math.round(value) + PX;
+          break;
+        default:
+          throw new Error('Only numeric style values are supported now');
       }
 
       results.push([prop, value]);
@@ -229,14 +256,24 @@ export class Player {
   }
 
   tick() {
-    this._currentTime = this.clock.currentTime - this._startingTimestamp;
-    this._computeProperties(this._currentTime).forEach(entry => this._apply(entry[0], entry[1]));
+    var currentTime = this._clock.currentTime - this._startingTimestamp;
+    this._computeProperties(currentTime).forEach(entry => this._apply(entry[0], entry[1]));
 
-    if (this._currentTime == this.totalTime) {
+    if (this._currentTime >= this.totalTime) {
       this._onfinish();
     } else {
-      this.clock.raf(() => this.tick());
+      this._clock.raf(() => this.tick());
     }
+
+    this._currentTime = currentTime;
+  }
+
+  _cleanup() {
+    this._properties.forEach(entry => {
+      var property = entry[0];
+      this._apply(property, this._initialValues[property]);
+    });
+    this._initialValues = null;
   }
 
   _apply(prop: string, value: string) {
