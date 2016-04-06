@@ -10,9 +10,7 @@ export class MockBrowserClock extends BrowserClock {
     this.startingTime = 0;
   }
 
-  next(fn) {
-    this._queue.push(fn);
-  }
+  raf(fn) {}
 
   fastForward(time: number) {
     this.incrementedTime += time;
@@ -24,15 +22,5 @@ export class MockBrowserClock extends BrowserClock {
 
   get currentTime() {
     return this.startingTime + this.incrementedTime;
-  }
-
-  _flush(): boolean {
-    if (this._queue.length == 0) return false;
-
-    var oldQueue = this._queue;
-    this._queue = [];
-
-    oldQueue.forEach(entry => entry());
-    return true;
   }
 }
