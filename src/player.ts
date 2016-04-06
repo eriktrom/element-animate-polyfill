@@ -1,90 +1,14 @@
 import {BrowserClock} from './browser_clock.ts';
 import {BrowserStyles} from './browser_styles';
 import {DIMENSIONAL_PROPERTIES} from './dimensional_properties';
-import {roundDecimal, toInt, toFloat, isNumber, isPresent} from './util';
+import {NUMERICAL_PROPERTIES} from './numerical_properties';
+import {forEach, roundDecimal, toInt, toFloat, isNumber, isPresent} from './util';
+import {DimensionalStyleCalculator} from './calculators/dimensional_style_calculator';
+import {NumericalStyleCalculator} from './calculators/numerical_style_calculator';
+import {StyleCalculator} from './style_calculator';
 
-var $0 = 48;
-var $9 = 57;
-var $PERIOD = 46;
-var PX = 'px';
-var START = 0;
-var END = 1;
-
-enum CssValueType {
-  Pixel,
-  Numeric,
-  Color
-}
-
-function isNumericProperty(property: string): boolean {
-  switch (property) {
-    case 'opacity':
-    case 'z-index':
-      return true;
-    default:
-      return false;
-  }
-}
-
-function isDimensionalProperty(property: string): boolean {
-  return DIMENSIONAL_PROPERTIES.indexOf(property) >= 0;
-}
-
-function findDimensionalSuffix(value) {
-  for (var i = 0; i < value.length; i++) {
-    var c = value.charCodeAt(i);
-    if ((c >= $0 && c <= $9) || c == $PERIOD) continue;
-    return value.substring(i, value.length);
-  }
-}
-
-function computePxValue(browserStyles: BrowserStyles, testElement: HTMLElement, prop: string, value: string, measurement: string): number {
-  var isEM = measurement == 'em';
-  if (isEM) {
-    testElement.style[prop] = value;
-  }
-
-  var pxValue = toFloat(browserStyles.getComputedStyle(testElement, prop));
-  if (isEM) {
-    testElement.style[prop] = null;
-  } else{
-    pxValue = pxValue * toFloat(value);
-  }
-
-  return pxValue;
-}
-
-class NormalizedKeyframeStyle {
-  constructor(public property: string, public value: number|string, public type: CssValueType) {}
-}
-
-function normalizeStyles(browserStyles: BrowserStyles, element:HTMLElement, styles: {[key: string]: string}): NormalizedKeyframeStyle[] {
-  var newStyles = [];
-  for (var prop in styles) {
-    var type;
-    var value: any = styles[prop];
-    if (isDimensionalProperty(prop)) {
-      if (!isNumber(value)) {
-        var measurement = findDimensionalSuffix(value);
-        if (!isPresent(measurement)) {
-          throw new Error('Please set a suffix for ' + prop + ':' + value);
-        }
-
-        if (measurement == PX) {
-          value = toFloat(value);
-        } else {
-          value = computePxValue(browserStyles, element, prop, value, measurement);
-        }
-      }
-      type = CssValueType.Pixel;
-    } else if(isNumericProperty(prop)) {
-      type = CssValueType.Numeric;
-    } else {
-      throw new Error('only dimensional styles are supported for now...');
-    }
-    newStyles.push(new NormalizedKeyframeStyle(prop, value, type));
-  }
-  return newStyles;
+export class AnimationPropertyEntry {
+  constructor(public property: string, public calculator: StyleCalculator) {}
 }
 
 export class PlayerOptions {
@@ -116,12 +40,24 @@ export class PlayerOptions {
   }
 }
 
+function createCalculator(prop: string, values: any[]): StyleCalculator {
+  var calc: StyleCalculator;
+  if (DIMENSIONAL_PROPERTIES.indexOf(prop) >= 0) {
+    calc = new DimensionalStyleCalculator();
+  } else if (NUMERICAL_PROPERTIES.indexOf(prop) >= 0) {
+    calc = new NumericalStyleCalculator();
+  } else {
+    throw new Error('Only dimensional properties can be animated now');
+  }
+  calc.setKeyframeRange(<string|number>values[0], <string|number>values[1]);
+  return calc;
+}
+
 export class Player {
   private _currentTime: number = 0;
   private _startingTimestamp: number = 0;
-  private _properties: any[] = [];
-  private _initialValues: {[prop: string]: string};
-  private _keyframes: {[key: string]: string|number}[];
+  private _animators: AnimationPropertyEntry[];
+  private _initialValues: {[key: string]: string};
 
   onfinish: Function = () => {};
   playing: boolean;
@@ -132,20 +68,21 @@ export class Player {
               private _clock: BrowserClock,
               private _styles: BrowserStyles) {
 
-    var formattedKeyframes = keyframes.map(keyframe => normalizeStyles(_styles, _element, keyframe));
-
-    var firstKeyframe = formattedKeyframes[0];
-    firstKeyframe.forEach((entry) => {
-      var prop = entry.property;
-      this._properties.push([prop, entry.type]);
+    var properties = {};
+    var firstKeyframe = keyframes[0];
+    forEach(firstKeyframe, (value, prop) => {
+      properties[prop] = [value];
     });
 
-    this._keyframes = formattedKeyframes.map(entry => {
-      var styles: {[key: string]: string|number} = {};
-      entry.forEach(data => {
-        styles[data.property] = data.value;
-      });
-      return styles;
+    var secondKeyframe = keyframes[1];
+    forEach(secondKeyframe, (value, prop) => {
+      properties[prop].push(value);
+    });
+
+    this._animators = [];
+    forEach(properties, (values, prop) => {
+      var calculator = createCalculator(prop, values);
+      this._animators.push(new AnimationPropertyEntry(prop, calculator));
     });
   }
 
@@ -160,8 +97,8 @@ export class Player {
   play() {
     if (this.playing) return;
     this._initialValues = {};
-    this._properties.forEach(entry => {
-      var prop = entry[0];
+    this._animators.forEach(entry => {
+      var prop = entry.property;
       this._initialValues[prop] = this._styles.readStyle(this._element, prop);
     });
     this.playing = true;
@@ -181,43 +118,14 @@ export class Player {
     this._cleanup();
   }
 
-  _calculate(currentTime: number, totalTime: number, startVal: number, diff: number): number {
-    return currentTime / totalTime * diff + startVal;
-  }
-
   _computeProperties(currentTime: number): string[] {
-    var start = this._keyframes[0];
-    var end = this._keyframes[1];
     var results = [];
     var totalTime = this.totalTime;
+    var percentage = Math.min(currentTime / totalTime, 1);
 
-    this._properties.forEach(entry => {
-      var prop = entry[0];
-      var startVal = start[prop];
-      var endVal = end[prop];
-      var type = <CssValueType>entry[1];
-      var value;
-      var unit;
-
-      if (currentTime >= totalTime) {
-        value = endVal;
-      } else {
-        var diff = <number>endVal - <number>startVal;
-        value = this._calculate(currentTime, this.totalTime, <number>startVal, diff);
-      }
-
-      switch (type) {
-        case CssValueType.Numeric:
-          value = roundDecimal(value, 2);
-          break;
-        case CssValueType.Pixel:
-          value = Math.round(value) + PX;
-          break;
-        default:
-          throw new Error('Only numeric style values are supported now');
-      }
-
-      results.push([prop, value]);
+    this._animators.forEach(entry => {
+      var calculator = entry.calculator;
+      results.push([entry.property, calculator.calculate(percentage)]);
     });
 
     return results;
@@ -237,8 +145,8 @@ export class Player {
   }
 
   _cleanup() {
-    this._properties.forEach(entry => {
-      var property = entry[0];
+    this._animators.forEach(entry => {
+      var property = entry.property;
       this._apply(property, this._initialValues[property]);
     });
     this._initialValues = null;

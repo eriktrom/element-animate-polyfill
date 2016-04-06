@@ -3,7 +3,7 @@ import {ElementAnimatePolyfill} from '../src/index';
 import {MockBrowserClock} from '../src/mock/mock_browser_clock.ts';
 import {BrowserStyles} from '../src/browser_styles.ts';
 import {DIMENSIONAL_PROPERTIES} from '../src/dimensional_properties';
-import {they} from './helpers';
+import {iit, xit, they} from './helpers';
 
 describe('Player', () => {
   var polyfill = new ElementAnimatePolyfill();

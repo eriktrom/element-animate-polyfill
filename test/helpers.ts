@@ -19,3 +19,9 @@ export function fthey(msg, vals, spec) {
 export function xthey(msg, vals, spec) {
   _baseThey(msg, vals, spec, xit);
 }
+
+export function iit(message, fn) {
+  return fit(message, fn);
+}
+
+export function xit(message, fn) {}
