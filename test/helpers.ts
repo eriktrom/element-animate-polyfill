@@ -16,6 +16,10 @@ export function fthey(msg, vals, spec) {
   _baseThey(msg, vals, spec, fit);
 }
 
+export function tthey(msg, vals, spec) {
+  return fthey(msg, vals, spec);
+}
+
 export function xthey(msg, vals, spec) {
   _baseThey(msg, vals, spec, xit);
 }
@@ -25,3 +29,7 @@ export function iit(message, fn) {
 }
 
 export function xit(message, fn) {}
+
+export function ddescribe(message, fn) {
+  return fdescribe(message, fn);
+}

@@ -1,19 +1,7 @@
 import {StyleCalculator} from '../style_calculator';
-import {toInt} from '../util';
+import {toInt, findDimensionalSuffix} from '../util';
 
 var DEFAULT_UNIT = 'px';
-
-var $0 = 48;
-var $9 = 57;
-var $PERIOD = 46;
-
-function findDimensionalSuffix(value) {
-  for (var i = 0; i < value.length; i++) {
-    var c = value.charCodeAt(i);
-    if ((c >= $0 && c <= $9) || c == $PERIOD) continue;
-    return value.substring(i, value.length);
-  }
-}
 
 export class DimensionalStyleCalculator implements StyleCalculator {
   private _unit: string;

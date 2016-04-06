@@ -5,6 +5,7 @@ import {NUMERICAL_PROPERTIES} from './numerical_properties';
 import {forEach, roundDecimal, toInt, toFloat, isNumber, isPresent} from './util';
 import {DimensionalStyleCalculator} from './calculators/dimensional_style_calculator';
 import {NumericalStyleCalculator} from './calculators/numerical_style_calculator';
+import {TransformStyleCalculator} from './calculators/transform_style_calculator';
 import {StyleCalculator} from './style_calculator';
 
 export class AnimationPropertyEntry {
@@ -46,6 +47,8 @@ function createCalculator(prop: string, values: any[]): StyleCalculator {
     calc = new DimensionalStyleCalculator();
   } else if (NUMERICAL_PROPERTIES.indexOf(prop) >= 0) {
     calc = new NumericalStyleCalculator();
+  } else if (prop == 'transform') {
+    calc = new TransformStyleCalculator();
   } else {
     throw new Error('Only dimensional properties can be animated now');
   }

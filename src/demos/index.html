@@ -31,10 +31,11 @@ var button = document.getElementById('play');
 button.addEventListener('click', function() {
   var el = document.getElementById('animate');
   var animator = el.animate([
-    {height: "150px"},
-    {height: "400px"}
+    {height: "150px", transform: 'rotate(0deg)'},
+    {height: "400px", transform: 'rotate(360deg)'}
   ],{
     duration: 500,
+    fillMode: 'forwards',
     easing: 'easeInOutQuad'
   });
 });

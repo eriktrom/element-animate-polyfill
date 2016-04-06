@@ -44,3 +44,17 @@ export function forEach(collection: any[]|{[key: string]: any}, fn: Function) {
 export function toJson(value: any) {
   return JSON.stringify(value);
 }
+
+const _$0 = 48;
+const _$9 = 57;
+const _$PERIOD = 46;
+
+export function findDimensionalSuffix(value): string {
+  for (var i = 0; i < value.length; i++) {
+    var c = value.charCodeAt(i);
+    if ((c >= _$0 && c <= _$9) || c == _$PERIOD) continue;
+    return value.substring(i, value.length);
+  }
+  return '';
+}
+

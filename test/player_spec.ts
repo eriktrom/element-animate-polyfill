@@ -3,7 +3,8 @@ import {ElementAnimatePolyfill} from '../src/index';
 import {MockBrowserClock} from '../src/mock/mock_browser_clock.ts';
 import {BrowserStyles} from '../src/browser_styles.ts';
 import {DIMENSIONAL_PROPERTIES} from '../src/dimensional_properties';
-import {iit, xit, they} from './helpers';
+import {iit, xit, they, tthey, ddescribe} from './helpers';
+import {TRANSFORM_PROPERTIES, NO_UNIT, PX_UNIT, DEGREES_UNIT} from '../src/transform_properties';
 
 describe('Player', () => {
   var polyfill = new ElementAnimatePolyfill();
@@ -230,7 +231,130 @@ describe('Player', () => {
       expect(element.style.width).toBe('999px');
     });
 
+    describe('transform properties', () => {
+      var propertiesToTest = [
+        'translate',
+        'translate3d',
+        'translateX',
+        'translateY',
+        'translateZ',
+        'scale',
+        'scale3d',
+        'scaleX',
+        'scaleY',
+        'scaleZ',
+        'rotate',
+        'rotateX',
+        'rotateY',
+        'rotateZ',
+        'rotate3d',
+        'skew',
+        'skewX',
+        'skewY'
+      ];
+
+      var defaultValuesTemplate = {
+        from: {},
+        to: {}
+      };
+
+      defaultValuesTemplate['from'][NO_UNIT] = '1';
+      defaultValuesTemplate['to'][NO_UNIT] = '10';
+
+      defaultValuesTemplate['from'][PX_UNIT] = '50px';
+      defaultValuesTemplate['to'][PX_UNIT] = '100px';
+
+      defaultValuesTemplate['from'][DEGREES_UNIT] = '20deg';
+      defaultValuesTemplate['to'][DEGREES_UNIT] = '300deg';
+
+      they('should animate the $prop property accordingly', propertiesToTest, (prop) => {
+        var defaultData = TRANSFORM_PROPERTIES[prop];
+        var fromValues = defaultData.units.map(unit => {
+          return defaultValuesTemplate['from'][unit];
+        });
+
+        var toValues = defaultData.units.map(unit => {
+          return defaultValuesTemplate['to'][unit];
+        });
+
+        var from = prop + '(' + fromValues.join(', ') + ')';
+        var to = prop + '(' + toValues.join(', ') + ')';
+
+        var element = el('div');
+        var keyframes = [
+          { transform: from}, { transform: to}
+        ];
+
+        var options = {
+          duration: 500,
+          fillMode: 'forwards'
+        };
+
+        var player: Player = animate(element, keyframes, options);
+        player.play();
+
+        clock.fastForward(0);
+        player.tick();
+
+        expect(element.style.transform).toBe(from);
+
+        clock.fastForward(500);
+        player.tick();
+
+        expect(element.style.transform).toBe(to);
+      });
+
+      it('should animate two properties', () => {
+        var element = el('div');
+        var keyframes = [
+          { transform: 'scale(1) rotate(0deg)' },
+          { transform: 'scale(2) rotate(360deg)' }
+        ];
+
+        var options = {
+          duration: 500,
+          fillMode: 'forwards'
+        };
+
+        var player: Player = animate(element, keyframes, options);
+        player.play();
+
+        clock.fastForward(0);
+        player.tick();
+
+        expect(element.style.transform).toBe('scale(1, 1) rotate(0deg)');
+
+        clock.fastForward(500);
+        player.tick();
+
+        expect(element.style.transform).toBe('scale(2, 1) rotate(360deg)');
+      });
+
+      it('should animate two properties and invoke the default value for a property that is not provided', () => {
+        var element = el('div');
+        var keyframes = [
+          { transform: 'scale(4)' },
+          { transform: 'scale(8) rotate(360deg)' }
+        ];
+
+        var options = {
+          duration: 500,
+          fillMode: 'forwards'
+        };
+
+        var player: Player = animate(element, keyframes, options);
+        player.play();
+
+        clock.fastForward(0);
+        player.tick();
+
+        expect(element.style.transform).toBe('scale(4, 1) rotate(0deg)');
+
+        clock.fastForward(500);
+        player.tick();
+
+        expect(element.style.transform).toBe('scale(8, 1) rotate(360deg)');
+      });
+    });
   });
-
-
 });
