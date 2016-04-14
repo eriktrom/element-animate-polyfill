@@ -5,6 +5,34 @@ import {BrowserStyles} from '../src/browser_styles.ts';
 import {DIMENSIONAL_PROPERTIES} from '../src/dimensional_properties';
 import {iit, xit, they, tthey, ddescribe} from './helpers';
 import {TRANSFORM_PROPERTIES, NO_UNIT, PX_UNIT, DEGREES_UNIT} from '../src/transform_properties';
+import {COLOR_PROPERTIES} from '../src/color_properties';
+import {isPresent} from '../src/util';
+
+function assertColor(element, prop, value) {
+  var COLOR_REGEX = /rgba?\(\s*([^\),]+)\s*,\s*([^\),]+)\s*,\s*([^\),]+)\s*(?:,\s*([^\)]+)\s*)?\)*/;
+  value = value.toLowerCase();
+
+  var actualValue = window.getComputedStyle(element)[prop];
+  if (/^rgb(a)?/.test(value)) {
+    var isExpectingAlpha = RegExp.$1 == 'a';
+    var match = actualValue.match(COLOR_REGEX);
+    if (isExpectingAlpha) {
+      var targetValues = value.match(COLOR_REGEX);
+      var a1 = parseFloat(targetValues[4]);
+      var a2 = isPresent(match[4]) ? parseFloat(match[4]) : null;
+      var alpha = a2;
+      if (!isPresent(alpha)) {
+        alpha = 1;
+      } else if (Math.abs(1 - (a1/a2)) <= .1) {
+        alpha = a1;
+      }
+      actualValue = 'rgba(' + match[1] + ', ' + match[2] + ', ' + match[3] + ', ' + alpha.toString() + ')';
+    } else {
+      actualValue = 'rgb(' + match[1] + ', ' + match[2] + ', ' + match[3] + ')';
+    }
+  }
+  expect(actualValue).toEqual(value);
+}
 
 describe('Player', () => {
   var polyfill = new ElementAnimatePolyfill();
@@ -105,6 +133,120 @@ describe('Player', () => {
       player.tick();
 
       expect(element.style['z-index']).toBe('100');
+    });
+  });
+
+  describe('color properties', function() {
+    they('should animate hex color values', COLOR_PROPERTIES, (prop) => {
+      var element = el('div');
+      var keyframes = [
+        { [prop]: '#FF0000' },
+        { [prop]: '#00FF00' }
+      ];
+
+      var player: Player = animate(element, keyframes, 1000);
+
+      player.play();
+
+      clock.fastForward(500);
+      player.tick();
+
+      expect(element.style[prop]).toBe('rgb(128, 128, 0)');
+
+      clock.fastForward(1000);
+      player.tick();
+
+      expect(element.style[prop]).toBe('rgb(0, 255, 0)');
+    });
+
+    they('should animate rgb color values for $prop', COLOR_PROPERTIES, (prop) => {
+      var element = el('div');
+      var keyframes = [
+        { [prop]: 'rgb(255, 0, 0)' },
+        { [prop]: 'rgb(0, 255, 0)' }
+      ];
+
+      var player: Player = animate(element, keyframes, 1000);
+
+      player.play();
+
+      clock.fastForward(500);
+      player.tick();
+
+      assertColor(element, prop, 'rgb(128, 128, 0)');
+
+      clock.fastForward(1000);
+      player.tick();
+
+      assertColor(element, prop, 'rgb(0, 255, 0)');
+    });
+
+    they('should animate rgba color values', COLOR_PROPERTIES, (prop) => {
+      var element = el('div');
+      var keyframes = [
+        { [prop]: 'rgba(255, 0, 0, 0)' },
+        { [prop]: 'rgba(0, 255, 0, 1)' }
+      ];
+
+      var player: Player = animate(element, keyframes, 1000);
+
+      player.play();
+
+      clock.fastForward(500);
+      player.tick();
+
+      assertColor(element, prop, 'rgba(0, 255, 0, 0.5)');
+
+      clock.fastForward(1000);
+      player.tick();
+
+      assertColor(element, prop, 'rgba(0, 255, 0, 1)');
+    });
+
+    they('should animate hsl color values', COLOR_PROPERTIES, (prop) => {
+      var element = el('div');
+      var keyframes = [
+        { [prop]: 'hsl(0, 100%, 50%)' },
+        { [prop]: 'hsl(120, 100%, 50%)' }
+      ];
+
+      var player: Player = animate(element, keyframes, 1000);
+
+      player.play();
+
+      clock.fastForward(500);
+      player.tick();
+
+      assertColor(element, prop, 'rgb(128, 128, 0)');
+
+      clock.fastForward(1000);
+      player.tick();
+
+      assertColor(element, prop, 'rgb(0, 255, 0)');
+    });
+
+    they('should animate hsla color values', COLOR_PROPERTIES, (prop) => {
+      var element = el('div');
+      var keyframes = [
+        { [prop]: 'hsla(0, 100%, 50%, 0)' },
+        { [prop]: 'hsla(120, 100%, 50%, 1)' }
+      ];
+
+      var player: Player = animate(element, keyframes, 1000);
+
+      player.play();
+
+      assertColor(element, prop, 'rgba(0, 0, 0, 0)');
+
+      clock.fastForward(500);
+      player.tick();
+
+      assertColor(element, prop, 'rgba(0, 255, 0, 0.5)');
+
+      clock.fastForward(1000);
+      player.tick();
+
+      assertColor(element, prop, 'rgba(0, 255, 0, 1)');
     });
   });
 

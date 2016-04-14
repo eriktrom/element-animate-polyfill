@@ -31,10 +31,10 @@ var button = document.getElementById('play');
 button.addEventListener('click', function() {
   var el = document.getElementById('animate');
   var animator = el.animate([
-    {height: "150px", transform: 'rotate(0deg)'},
-    {height: "400px", transform: 'rotate(360deg)'}
+    {height: "150px", transform: 'rotate(0deg)', background:'hsla(120,100%,50%,0.5)'},
+    {height: "400px", transform: 'rotate(360deg)', background:'rgba(255,100,0,0.2)'}
   ],{
-    duration: 500,
+    duration: 5000,
     fillMode: 'forwards',
     easing: 'easeInOutQuad'
   });
