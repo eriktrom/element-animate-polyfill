@@ -9,6 +9,7 @@ import {NumericalStyleCalculator} from './calculators/numerical_style_calculator
 import {TransformStyleCalculator} from './calculators/transform_style_calculator';
 import {ColorStyleCalculator} from './calculators/color_style_calculator';
 import {StyleCalculator} from './style_calculator';
+import {resolveEasingEquation} from './easing';
 
 export class AnimationPropertyEntry {
   constructor(public property: string, public calculator: StyleCalculator) {}
@@ -65,6 +66,7 @@ export class Player {
   private _startingTimestamp: number = 0;
   private _animators: AnimationPropertyEntry[];
   private _initialValues: {[key: string]: string};
+  private _easingEquation: Function;
 
   onfinish: Function = () => {};
   playing: boolean;
@@ -91,6 +93,8 @@ export class Player {
       var calculator = createCalculator(prop, values);
       this._animators.push(new AnimationPropertyEntry(prop, calculator));
     });
+
+    this._easingEquation = resolveEasingEquation(_options.easing);
   }
 
   get totalTime() {
@@ -125,14 +129,19 @@ export class Player {
     this._cleanup();
   }
 
+  _ease(percentage) {
+    return this._easingEquation(percentage).y;
+  }
+
   _computeProperties(currentTime: number): string[] {
     var results = [];
     var totalTime = this.totalTime;
     var percentage = Math.min(currentTime / totalTime, 1);
+    var percentageWithEasing = this._ease(percentage);
 
     this._animators.forEach(entry => {
       var calculator = entry.calculator;
-      results.push([entry.property, calculator.calculate(percentage)]);
+      results.push([entry.property, calculator.calculate(percentageWithEasing)]);
     });
 
     return results;

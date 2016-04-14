@@ -13,6 +13,7 @@
   "files": [
     "src/index.ts",
     "test/player_spec.ts",
+    "test/cubic_bezier_spec.ts",
     "typings/main.d.ts"
   ]
 }
