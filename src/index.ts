@@ -20,6 +20,7 @@ if (true) {
   var globalStyles = new BrowserStyles();
 
   Element.prototype['animate'] = function(keyframes, options) {
+
     var element = this;
     var player = polyfill.animate(element, keyframes, options, globalClock, globalStyles);
     player.play();

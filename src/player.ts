@@ -9,6 +9,7 @@ import {NumericalStyleCalculator} from './calculators/numerical_style_calculator
 import {TransformStyleCalculator} from './calculators/transform_style_calculator';
 import {ColorStyleCalculator} from './calculators/color_style_calculator';
 import {StyleCalculator} from './style_calculator';
+import {animationErrors} from './errors';
 
 export class AnimationPropertyEntry {
   constructor(public property: string, public calculator: StyleCalculator) {}
@@ -83,13 +84,24 @@ export class Player {
 
     var secondKeyframe = keyframes[1];
     forEach(secondKeyframe, (value, prop) => {
-      properties[prop].push(value);
+      if(properties[prop]) {
+        properties[prop].push(value);
+      } else {
+        throw new Error(animationErrors.partial);
+      }
     });
 
+    var previousFramePropsLength;
     this._animators = [];
     forEach(properties, (values, prop) => {
+      if (previousFramePropsLength && previousFramePropsLength !== prop.length) {
+        throw new Error(animationErrors.partial);
+      }
+
       var calculator = createCalculator(prop, values);
       this._animators.push(new AnimationPropertyEntry(prop, calculator));
+
+      previousFramePropsLength = prop.length;
     });
   }
 

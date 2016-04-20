@@ -2,6 +2,7 @@ import {Player, PlayerOptions} from "./player";
 import {isPresent, isNumber} from "./util";
 import {BrowserClock} from './browser_clock.ts';
 import {BrowserStyles} from './browser_styles';
+import {animationErrors} from './errors';
 
 export class Animation {
   options: PlayerOptions;
@@ -12,8 +13,15 @@ export class Animation {
               options: any,
               clock: BrowserClock = null,
               styles: BrowserStyles = null) {
-    if (isNumber(options)) {
+
+    if(arguments.length && !arguments[0]) {
+      throw new Error(animationErrors.nokeyframes);
+    }
+
+    if (isNumber(options) && options > 0) {
       options = { duration: options };
+    } else if (!isNumber(options.duration) || options.duration < 0) {
+      throw new Error(animationErrors.durationdouble);
     }
 
     this.options = new PlayerOptions(options);
