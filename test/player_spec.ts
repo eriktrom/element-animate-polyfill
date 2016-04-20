@@ -310,7 +310,7 @@ describe('Player', () => {
       expect(element.style.width).toBe('');
     });
 
-    it('should cleanup styles after the animation is complete if fillMode "none" is passed', () => {
+    it('should cleanup styles after the animation is complete if fill "none" is passed', () => {
       var element = el('div');
       var keyframes = [
         { width: 100 },
@@ -318,7 +318,7 @@ describe('Player', () => {
       ];
       var options = {
         duration: 500,
-        fillMode: 'none'
+        fill: 'none'
       };
 
       var player: Player = animate(element, keyframes, options);
@@ -344,7 +344,7 @@ describe('Player', () => {
       expect(element.style.width).toBe('');
     });
 
-    it('should retain styles after the animation is complete if a fillMode of "forwards" is provided', () => {
+    it('should retain styles after the animation is complete if a fill of "forwards" is provided', () => {
       var element = el('div');
       var keyframes = [
         { width: '333px' },
@@ -352,7 +352,7 @@ describe('Player', () => {
       ];
       var options = {
         duration: 500,
-        fillMode: 'forwards'
+        fill: 'forwards'
       };
 
       var player: Player = animate(element, keyframes, options);
@@ -429,7 +429,7 @@ describe('Player', () => {
 
         var options = {
           duration: 500,
-          fillMode: 'forwards'
+          fill: 'forwards'
         };
 
         var player: Player = animate(element, keyframes, options);
@@ -455,7 +455,7 @@ describe('Player', () => {
 
         var options = {
           duration: 500,
-          fillMode: 'forwards'
+          fill: 'forwards'
         };
 
         var player: Player = animate(element, keyframes, options);
@@ -481,7 +481,7 @@ describe('Player', () => {
 
         var options = {
           duration: 500,
-          fillMode: 'forwards'
+          fill: 'forwards'
         };
 
         var player: Player = animate(element, keyframes, options);

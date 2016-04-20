@@ -118,28 +118,6 @@ class Bezier {
   }
 }
 
-/**
-export function makeCubicBezierEquation(coords: [number, number, number, number]): Function {
-  var c1 = new Coordinate(0,0);
-  var c2 = new Coordinate(coords[0], coords[1]);
-  var c3 = new Coordinate(coords[2], coords[3]);
-  var c4 = new Coordinate(1,1);
-
-  return function(p: number): Coordinate {
-    var q = 1 - p;
-    var b1 = q * q * q;
-    var b2 = 3 * (q * q) * p;
-    var b3 = 3 * q * (p * p);
-    var b4 = p * p * p;
-
-    var x = (c1.x * b1) + (c2.x * b2) + (c3.x * b3) + (c4.x * b4);
-    var y = (c1.y * b1) + (c2.y * b2) + (c3.y * b3) + (c4.y * b4);
-
-    return new Coordinate(x,y);
-  };
-}
-*/
-
 export function computePercentageFromEasing(percentage: number, easing: [number, number, number, number]) {
   return new Bezier(easing).solve(percentage);
 }

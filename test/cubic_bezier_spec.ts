@@ -1,24 +1,22 @@
 import {iit, xit, they, tthey, ddescribe} from './helpers';
 import {
+  LINEAR,
   EASE,
   EASE_IN,
   EASE_OUT,
   EASE_IN_OUT,
-  makeCubicBezierEquation
+  computePercentageFromEasing
 } from '../src/easing';
 
 describe('Player', () => {
   iit('should compute a linear cubic bezier curve', () => {
-    var curve = makeCubicBezierEquation([0, 0, 1, 1]);
-    var coordinates = curve(0.5);
-    expect(coordinates.x).toBe(0.5);
-    expect(coordinates.y).toBe(0.5);
-  });
+    var y0 = computePercentageFromEasing(0, LINEAR);
+    expect(y0).toBe(0);
 
-  iit('should support an ease-in equation', () => {
-    var curve = makeCubicBezierEquation(EASE);
-    var coordinates = curve(0.5);
-    expect(coordinates.x).toBe(0.3125);
-    expect(coordinates.y).toBe(0.5375);
+    var y1 = computePercentageFromEasing(0.5, LINEAR);
+    expect(y1).toBe(0.5);
+
+    var y2 = computePercentageFromEasing(1, LINEAR);
+    expect(y2).toBe(1);
   });
 });
