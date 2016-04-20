@@ -130,7 +130,7 @@ export class Player {
   }
 
   _ease(percentage) {
-    return this._easingEquation(percentage).y;
+    return this._easingEquation(percentage);
   }
 
   _computeProperties(currentTime: number): string[] {
