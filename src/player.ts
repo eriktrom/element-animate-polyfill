@@ -19,26 +19,26 @@ export class PlayerOptions {
   public duration: number;
   public delay: number;
   public easing: string;
-  public fillMode: string;
+  public fill: string;
 
-  constructor ({duration, delay, easing, fillMode}: {
+  constructor ({duration, delay, easing, fill}: {
     duration: number|string,
     delay?: number|string,
     easing?: string,
-    fillMode?: string
+    fill?: string
   }) {
     this.duration = toInt(duration);
     this.delay = isPresent(delay) ? toInt(delay) : 0;
     this.easing = isPresent(easing) ? easing : 'linear';
 
-    switch (fillMode) {
+    switch (fill) {
       case 'forwards':
       case 'backwards':
       case 'both':
-        this.fillMode = fillMode;
+        this.fill = fill;
         break;
       default:
-        this.fillMode = 'none';
+        this.fill = 'none';
         break;
     }
   }
@@ -118,8 +118,8 @@ export class Player {
   }
 
   _onfinish() {
-    var fillMode = this._options.fillMode;
-    if (fillMode == 'none' || fillMode == 'backwards') {
+    var fill = this._options.fill;
+    if (fill == 'none' || fill == 'backwards') {
       this._cleanup();
     }
     this.onfinish();

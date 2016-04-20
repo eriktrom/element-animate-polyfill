@@ -13,16 +13,17 @@ export class ElementAnimatePolyfill {
   }
 }
 
-//if (!Element.prototype['animate']) {
-if (true) {
-  var polyfill = new ElementAnimatePolyfill();
-  var globalClock = new BrowserClock();
-  var globalStyles = new BrowserStyles();
+var polyfill = new ElementAnimatePolyfill();
+var globalClock = new BrowserClock();
+var globalStyles = new BrowserStyles();
+var elementAnimateFn = window['$$elementAnimateFn'] = function(element, keyframes, options) {
+  var player = polyfill.animate(element, keyframes, options, globalClock, globalStyles);
+  player.play();
+  return player;
+}
 
-  Element.prototype['animate'] = function(keyframes, options) {
-    var element = this;
-    var player = polyfill.animate(element, keyframes, options, globalClock, globalStyles);
-    player.play();
-    return player;
-  }
+if (!Element.prototype['animate']) {
+  Element.prototype['animate'] = (keyframes, options) => {
+    elementAnimateFn(this, keyframes, options);
+  };
 }
