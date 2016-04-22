@@ -499,4 +499,418 @@ describe('Player', () => {
       });
     });
   });
+
+  describe('timeline controls', () => {
+    describe('pause and play', () => {
+
+      it('should freeze the currentTime and set playState to paused', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+        player.play();
+
+        clock.fastForward(500);
+        player.tick();
+
+        player.pause();
+
+        expect(player.currentTime).toBe(500);
+        expect(player.playState).toBe('paused');
+      });
+
+      it('should keep the style values for the paused currentTime', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+        player.play();
+
+        clock.fastForward(500);
+        player.tick();
+
+        player.pause();
+        assertColor(element, 'color', 'rgb(128, 0, 128)');
+      });
+
+      it('should resume the animation when play() is called', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+        player.play();
+
+        clock.fastForward(500);
+        player.tick();
+
+        player.pause();
+        assertColor(element, 'color', 'rgb(128, 0, 128)');
+
+        player.play();
+        clock.fastForward(250);
+        player.tick();
+        assertColor(element, 'color', 'rgb(64, 0, 191)');
+      });
+
+    });
+
+    describe('finish()', () => {
+
+      it('should set the currentTime to the endTime and playState to finished (after a tick)', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          {color: 'red'},
+          {color: 'blue'}
+        ], 1000);
+
+        player.play();
+
+        player.finish();
+        expect(player.currentTime).toBe(1000);
+
+        player.tick();
+        expect(player.playState).toBe('finished');
+      });
+
+      it('should call onfinish()', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+        player.onfinish = jasmine.createSpy('onfinish');
+
+        player.play();
+
+        player.finish();
+        player.tick();
+
+        expect(player.onfinish).toHaveBeenCalledTimes(1);
+      });
+
+      it('should set the element styles for default fillMode', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+
+        player.play();
+
+        clock.fastForward(500);
+        player.tick();
+
+        expect(element.style.color).toBe('rgb(128, 0, 128)');
+
+        player.finish();
+        player.tick();
+
+        expect(element.style.color).toBe('');
+        assertColor(element, 'color', 'rgb(0, 0, 0)');
+      });
+
+      it('should set the element styles for fillMode "forwards"', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], {
+          duration: 1000,
+          fill: 'forwards'
+        });
+
+
+        player.play();
+
+        clock.fastForward(500);
+        player.tick();
+
+        expect(element.style.color).toBe('rgb(128, 0, 128)');
+
+        player.finish();
+        player.tick();
+
+        assertColor(element, 'color', 'rgb(0, 0, 255)');
+      });
+
+      describe('when paused', function() {
+
+        it('should finish the animation', () => {
+          var element = el('div');
+
+          var player: Player = animate(element, [
+            { color: 'red' },
+            { color: 'blue' }
+          ], 1000);
+
+          player.onfinish = jasmine.createSpy('onfinish');
+
+          player.play();
+
+          clock.fastForward(500);
+          player.tick();
+
+          player.pause();
+          assertColor(element, 'color', 'rgb(128, 0, 128)');
+
+          player.finish();
+          player.tick();
+
+          expect(player.playState).toBe('finished');
+          assertColor(element, 'color', 'rgb(0, 0, 0)');
+          expect(player.onfinish).toHaveBeenCalledTimes(1);
+        });
+
+        it('should set the element styles for fillMode "forwards"', () => {
+          var element = el('div');
+
+          var player: Player = animate(element, [
+            { color: 'red' },
+            { color: 'blue' }
+          ], {
+              duration: 1000,
+              fill: 'forwards'
+            });
+
+
+          player.play();
+
+          clock.fastForward(500);
+          player.tick();
+
+          player.pause();
+          assertColor(element, 'color', 'rgb(128, 0, 128)');
+
+          player.finish();
+          player.tick();
+
+          assertColor(element, 'color', 'rgb(0, 0, 255)');
+        });
+
+      });
+
+    });
+
+    describe('cancel()', () => {
+      it('should set the currentTime to null and the playState to idle', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+
+        player.play();
+
+        clock.fastForward(500);
+        player.tick();
+
+        player.cancel();
+        player.tick();
+
+        expect(player.currentTime).toBe(null);
+        expect(player.playState).toBe('idle');
+      });
+
+      it('should call oncancel() after a tick', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+        player.oncancel = jasmine.createSpy('oncancel');
+
+        player.play();
+
+        clock.fastForward(500);
+
+        player.cancel();
+        expect(player.oncancel).not.toHaveBeenCalled();
+
+        player.tick();
+        expect(player.oncancel).toHaveBeenCalledTimes(1);
+      });
+
+      it('should remove the element styles', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+
+        player.play();
+
+        clock.fastForward(500);
+        player.tick();
+
+        expect(element.style.color).toBe('rgb(128, 0, 128)');
+
+        player.cancel();
+        player.tick();
+
+        expect(element.style.color).toBe('');
+      });
+
+      it('should cancel the animation when it is paused', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+        player.oncancel = jasmine.createSpy('oncancel');
+
+        player.play();
+
+        clock.fastForward(500);
+        player.tick();
+
+        player.pause();
+        assertColor(element, 'color', 'rgb(128, 0, 128)');
+
+        player.cancel();
+        player.tick();
+
+        expect(player.playState).toBe('idle');
+        assertColor(element, 'color', 'rgb(0, 0, 0)');
+        expect(player.oncancel).toHaveBeenCalledTimes(1);
+      });
+
+    });
+
+    describe('setting the current Time', () => {
+
+      it('should set the animated properties when the event order is pause() -> setCurrentTime()', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+        player.play();
+        player.tick();
+
+        clock.fastForward(500);
+        player.tick();
+
+        player.pause();
+        assertColor(element, 'color', 'rgb(128, 0, 128)');
+
+        player.currentTime = 750;
+        assertColor(element, 'color', 'rgb(64, 0, 191)');
+      });
+
+      it('should set the animated properties when the event order is cancel() -> setCurrentTime()', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+        player.play();
+        player.tick();
+
+        clock.fastForward(500);
+        player.tick();
+
+        player.cancel();
+        assertColor(element, 'color', 'rgb(128, 0, 128)');
+        player.tick() //trigger oncancel
+
+        player.currentTime = 750;
+        assertColor(element, 'color', 'rgb(64, 0, 191)');
+      });
+
+
+      it('should play and finish the animation when the animation is finished and setCurrentTime() is called', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+        player.play();
+        player.tick();
+
+        clock.fastForward(1000);
+        player.tick();
+        player.tick();
+
+        assertColor(element, 'color', 'rgb(0, 0, 0)');
+        expect(player.playState).toBe('finished');
+
+        player.currentTime = 750;
+        player.tick();
+        expect(player.playState).toBe('running');
+
+        assertColor(element, 'color', 'rgb(64, 0, 191)');
+
+        clock.fastForward(1000);
+        player.tick();
+        player.tick();
+
+        assertColor(element, 'color', 'rgb(0, 0, 0)');
+        expect(player.playState).toBe('finished');
+      });
+
+
+      it('should finish the animation when the event order is pause() -> setCurrentTime() -> play()', () => {
+        var element = el('div');
+
+        var player: Player = animate(element, [
+          { color: 'red' },
+          { color: 'blue' }
+        ], 1000);
+
+        player.onfinish = jasmine.createSpy('onfinish');
+
+        player.play();
+        player.tick();
+
+        clock.fastForward(500);
+        player.tick();
+
+        player.pause();
+        assertColor(element, 'color', 'rgb(128, 0, 128)');
+
+        player.currentTime = 750;
+        assertColor(element, 'color', 'rgb(64, 0, 191)');
+
+        player.play();
+
+        clock.fastForward(250);
+        player.tick();
+        player.tick(); // TODO: investigate why second tick is needed
+
+        expect(player.playState).toBe('finished');
+        assertColor(element, 'color', 'rgb(0, 0, 0)');
+        expect(player.onfinish).toHaveBeenCalledTimes(1);
+      });
+    });
+
+  });
 });

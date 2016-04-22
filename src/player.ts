@@ -61,15 +61,18 @@ function createCalculator(prop: string, values: any[]): StyleCalculator {
   return calc;
 }
 
+type PlayStates = 'idle' | 'pending' | 'running' | 'paused' | 'finished';
+
 export class Player {
-  private _currentTime: number = 0;
+  private _currentTime: number = null;
   private _startingTimestamp: number = 0;
   private _animators: AnimationPropertyEntry[];
   private _initialValues: {[key: string]: string};
   private _easingEquation: Function;
+  private _playState: PlayStates = 'idle';
 
   onfinish: Function = () => {};
-  playing: boolean;
+  oncancel: Function = () => {};
 
   constructor(private _element: HTMLElement,
               keyframes: {[key: string]: string}[],
@@ -97,24 +100,75 @@ export class Player {
     this._easingEquation = resolveEasingEquation(_options.easing);
   }
 
-  get totalTime() {
-    return this._options.duration;
-  }
-
   get currentTime() {
     return this._currentTime;
   }
 
+  set currentTime(currentTime: number) {
+    //TODO: handle negative values correctly
+    if(!isNumber(currentTime)) {
+      return;
+    }
+    this._currentTime = currentTime;
+    this._startingTimestamp = this._clock.now() - this._currentTime;
+
+    switch (this.playState) {
+      case 'paused':
+        this._setPropertiesAtCurrentTime();
+        break;
+
+      case 'idle':
+        this._setInitialValues();
+        this._setPropertiesAtCurrentTime();
+        break;
+
+      case 'finished':
+        this._setInitialValues();
+        this.play();
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  get totalTime() {
+    return this._options.duration;
+  }
+
+  get playState() {
+    return this._playState;
+  }
+
   play() {
-    if (this.playing) return;
-    this._initialValues = {};
-    this._animators.forEach(entry => {
-      var prop = entry.property;
-      this._initialValues[prop] = this._styles.readStyle(this._element, prop);
-    });
-    this.playing = true;
-    this._startingTimestamp = this._clock.now();
+    if (this.currentTime === null || this._currentTime >= this.totalTime) {
+      this._setInitialValues();
+      this._currentTime = 0;
+    }
+    this._startingTimestamp = this._clock.now() - this._currentTime;
+    this._playState = 'running';
     this.tick();
+  }
+
+  pause() {
+    this._playState = 'paused'; // Native sets this first to pending and then to paused after a tick
+  }
+
+  finish() {
+    this._currentTime = this.totalTime;
+    this._startingTimestamp = this._clock.now() - this._currentTime;
+
+     if (this._playState !== 'running') {
+      this._setPropertiesAtCurrentTime();
+      this._onfinish();
+    }
+  }
+
+  cancel() {
+    this._currentTime = null;
+    if(this.playState !== 'running') {
+      this._oncancel();
+    }
   }
 
   _onfinish() {
@@ -122,11 +176,14 @@ export class Player {
     if (fill == 'none' || fill == 'backwards') {
       this._cleanup();
     }
+    this._playState = 'finished';
     this.onfinish();
   }
 
   _oncancel() {
     this._cleanup();
+    this._playState = 'idle';
+    this.oncancel();
   }
 
   _ease(percentage) {
@@ -147,11 +204,30 @@ export class Player {
     return results;
   }
 
-  tick() {
+  _setPropertiesAtCurrentTime(): number {
     var currentTime = this._clock.currentTime - this._startingTimestamp;
     this._computeProperties(currentTime).forEach(entry => this._apply(entry[0], entry[1]));
 
-    if (this._currentTime >= this.totalTime) {
+    return currentTime;
+  }
+
+  _setInitialValues() {
+    this._initialValues = {};
+    this._animators.forEach(entry => {
+      var prop = entry.property;
+      this._initialValues[prop] = this._styles.readStyle(this._element, prop);
+    });
+  }
+
+  tick() {
+    if (this._playState !== 'running') return;
+
+    var currentTime = this._setPropertiesAtCurrentTime();
+
+    if(this._currentTime === null) {
+      this._oncancel();
+      return;
+    } else if (this._currentTime >= this.totalTime) {
       this._onfinish();
     } else {
       this._clock.raf(() => this.tick());
