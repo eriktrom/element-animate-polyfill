@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>My Angular App</title>
+<title>Element.animate() polyfill demo</title>
 <style>
 .left, .right {
   width:50%;
   position:absolute;
-  top:0;
+  top:40px;
   bottom:0;
 }
 .left {
@@ -31,29 +31,47 @@ nav {
   background:rgba(0,0,0,0.5);
   z-index:1000;
 }
+
+.cont {
+  height: 40px;
+}
 </style>
 </head>
 <body>
 
 <nav>
-  <button id="play">Animate</button>
+  <button id="animateplay">Reset and Play</button>
+  <button id="play">Play</button>
+  <button id="pause">Pause</button>
+  <button id="cancel">Cancel</button>
+  <button id="finish">Finish</button>
 </nav>
 
 <div class="left">
+  <span>Native</span>
   <div id="animate1"></div>
 </div>
 <div class="right">
+  <span>Polyfill</span>
   <div id="animate2"></div>
 </div>
 
 
 <script type="text/javascript" src="../element-animate-polyfill.js"></script>
 <script>
-var button = document.getElementById('play');
+var animate = document.getElementById('animateplay');
+var play = document.getElementById('play');
+var pause = document.getElementById('pause');
+var cancel = document.getElementById('cancel');
+var finish = document.getElementById('finish');
 
-button.addEventListener('click', function() {
-  var el1 = document.getElementById('animate1');
-  var el2 = document.getElementById('animate2');
+var el1 = document.getElementById('animate1');
+var el2 = document.getElementById('animate2');
+
+var pNative;
+var pPoly;
+
+animate.addEventListener('click', function() {
   var animation = [
     {height: "150px", transform: 'rotate(0deg)', background:'hsla(120,100%,50%,0.5)'},
     {height: "400px", transform: 'rotate(360deg)', background:'rgba(255,100,0,0.2)'}
@@ -64,9 +82,67 @@ button.addEventListener('click', function() {
     easing: 'cubic-bezier(0,-0.85,0,.69)'
   };
 
-  el1.animate(animation, options);
-  window['$$elementAnimateFn'](el2, animation, options);
+  pNative = el1.animate(animation, options);
+  pPoly = window['$$elementAnimateFn'](el2, animation, options);
+
+  pNative.oncancel = addCallback('native', pNative, 'oncancel');
+  pNative.onfinish = addCallback('native', pNative, 'onfinish');
+
+  pPoly.oncancel = addCallback('poly', pPoly, 'oncancel');
+  pPoly.onfinish = addCallback('poly', pPoly, 'onfinish');
+
 });
+
+play.addEventListener('click', function() {
+
+  if (pNative) {
+    pNative.play();
+    console.log('native', 's', pNative.startTime, 'c', pNative.currentTime);
+  }
+
+  if (pPoly) {
+    pPoly.play();
+    console.log('poly', 's', pNative.startTime, 'c', pNative.currentTime);
+  }
+
+
+});
+
+pause.addEventListener('click', function() {
+  console.log('pause');
+  console.log('native', pNative.playState);
+  console.log('poly', pPoly.playState);
+  pNative.pause();
+  pPoly.pause();
+  console.log('native', pNative.playState);
+  console.log('poly', pPoly.playState);
+  setTimeout(() => {
+    console.log('after timeout');
+    console.log('native', pNative.playState, 's', pNative.startTime, 'c', pNative.currentTime);
+    console.log('poly', pPoly.playState, 's', pPoly.startTime, 'c', pPoly.currentTime);
+  });
+});
+
+cancel.addEventListener('click', function() {
+  console.log('cancel');
+  console.log('native', pNative.playState);
+  console.log('poly', pPoly.playState);
+  pNative.cancel();
+  pPoly.cancel();
+  console.log('native', pNative.playState);
+  console.log('poly', pPoly.playState);
+});
+
+finish.addEventListener('click', function() {
+  pNative.finish();
+  pPoly.finish();
+});
+
+function addCallback(type, player, event) {
+  return function(e) {
+    console.log(type, player, 'currentTime', player.currentTime, 'playstate', player.playState);
+  };
+}
 
 </script>
 <script>
