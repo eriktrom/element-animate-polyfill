@@ -1,18 +1,23 @@
 var webpack = require ('webpack');
 var fs = require('fs-extra');
+var watch = require('watch');
 var http = require('http-server');
 var webpackConfig = require('./webpack.config.js');
 var livereload = require('livereload');
 
 var compiler = webpack(webpackConfig);
 
-var watcher = compiler.watch({}, function() {
-  // copy();
+compiler.watch({}, function() {
+  copyDemo();
 });
 
-function copy() {
-  fs.emptyDir('./dist', function() {
-    fs.mkdir('./dist', function() {
+watch.watchTree('src/demos', function() {
+  copyDemo();
+});
+
+function copyDemo() {
+  fs.emptyDir('./dist/demos', function() {
+    fs.mkdir('./dist/demos', function() {
       fs.copy('./src/demos', './dist/demos');
     });
   });
