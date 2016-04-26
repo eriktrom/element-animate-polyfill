@@ -9,7 +9,7 @@ import {
 } from '../src/easing';
 
 describe('Player', () => {
-  iit('should compute a linear cubic bezier curve', () => {
+  it('should compute a linear cubic bezier curve', () => {
     var y0 = computePercentageFromEasing(0, LINEAR);
     expect(y0).toBe(0);
 
