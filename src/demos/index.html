@@ -45,6 +45,8 @@ nav {
   <button id="pause">Pause</button>
   <button id="cancel">Cancel</button>
   <button id="finish">Finish</button>
+  <input id="currentTimeInput" type="number" placeholder="Enter currentTime" value="4000">
+  <button id="currentTime">Set currentTime</button>
 </nav>
 
 <div class="left">
@@ -64,6 +66,9 @@ var play = document.getElementById('play');
 var pause = document.getElementById('pause');
 var cancel = document.getElementById('cancel');
 var finish = document.getElementById('finish');
+var currentTime = document.getElementById('currentTime');
+
+var currentTimeInput = document.getElementById('currentTimeInput')
 
 var el1 = document.getElementById('animate1');
 var el2 = document.getElementById('animate2');
@@ -136,6 +141,15 @@ cancel.addEventListener('click', function() {
 finish.addEventListener('click', function() {
   pNative.finish();
   pPoly.finish();
+});
+
+currentTime.addEventListener('click', function() {
+  var newTime = parseInt(currentTimeInput.value);
+  pNative.currentTime = newTime;
+  pPoly.currentTime = newTime;
+  setTimeout(function() {
+    console.log('playState after setCurrenTime:', 'pNative', pNative.playState, 'pPoly', pPoly.playState)
+  });
 });
 
 function addCallback(type, player, event) {
