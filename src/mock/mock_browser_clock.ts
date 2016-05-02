@@ -10,7 +10,9 @@ export class MockBrowserClock extends BrowserClock {
     this.startingTime = 0;
   }
 
-  raf(fn) {}
+  raf(fn) {
+    this._queue.push(fn);
+  }
 
   fastForward(time: number) {
     this.incrementedTime += time;
@@ -18,6 +20,13 @@ export class MockBrowserClock extends BrowserClock {
 
   now() {
     return this.currentTime;
+  }
+
+  flushQueue() {
+    var item;
+    while (item = this._queue.shift()) {
+      item();
+    }
   }
 
   get currentTime() {

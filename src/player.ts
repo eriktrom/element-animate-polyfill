@@ -70,6 +70,7 @@ export class Player {
   private _initialValues: {[key: string]: string};
   private _easingEquation: Function;
   private _playState: PlayStates = 'idle';
+  private _isFirstTick: boolean = true;
 
   onfinish: Function = () => {};
   oncancel: Function = () => {};
@@ -159,15 +160,17 @@ export class Player {
     this._startingTimestamp = this._clock.now() - this._currentTime;
 
      if (this._playState !== 'running') {
-      this._setPropertiesAtCurrentTime();
-      this._onfinish();
+       this._clock.raf(() => {
+        this._setPropertiesAtCurrentTime();
+        this._onfinish();
+       });
     }
   }
 
   cancel() {
     this._currentTime = null;
     if(this.playState !== 'running') {
-      this._oncancel();
+      this._clock.raf(() => this._oncancel());
     }
   }
 
@@ -193,7 +196,14 @@ export class Player {
   _computeProperties(currentTime: number): string[] {
     var results = [];
     var totalTime = this.totalTime;
-    var percentage = Math.min(currentTime / totalTime, 1);
+    var percentage;
+
+    if(totalTime === 0) {
+      percentage = 1;
+    } else {
+      percentage = Math.min(currentTime / totalTime, 1);
+    }
+
     var percentageWithEasing = this._ease(percentage);
 
     this._animators.forEach(entry => {
@@ -224,7 +234,9 @@ export class Player {
 
     var currentTime = this._setPropertiesAtCurrentTime();
 
-    if(this._currentTime === null) {
+    if (this._isFirstTick) {
+      this._clock.raf(() => this.tick());
+    } else if(this._currentTime === null) {
       this._oncancel();
       return;
     } else if (this._currentTime >= this.totalTime) {
@@ -233,6 +245,7 @@ export class Player {
       this._clock.raf(() => this.tick());
     }
 
+    this._isFirstTick = false;
     this._currentTime = currentTime;
   }
 

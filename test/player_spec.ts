@@ -274,6 +274,28 @@ describe('Player', () => {
       expect(element.style.opacity).toBe('1');
     });
 
+    it('should finish an animation when duration is 0', () => {
+      var element = el('div');
+
+      var player: Player = animate(element, [
+        { color: 'red' },
+        { color: 'blue' }
+      ], {
+          duration: 0,
+          fill: 'forwards'
+        });
+
+      player.onfinish = jasmine.createSpy('onfinish');
+
+      player.play();
+      expect(player.onfinish).not.toHaveBeenCalled(); // the player should wait at least one tick
+      player.tick();
+
+      expect(player.playState).toBe('finished');
+      expect(player.onfinish).toHaveBeenCalledTimes(1);
+      assertColor(element, 'color', 'rgb(0, 0, 255)');
+    });
+
   });
 
   describe('fill mode', () => {
@@ -648,7 +670,7 @@ describe('Player', () => {
         assertColor(element, 'color', 'rgb(0, 0, 255)');
       });
 
-      describe('when paused', function() {
+      describe('when paused', () => {
 
         it('should finish the animation', () => {
           var element = el('div');
@@ -669,7 +691,7 @@ describe('Player', () => {
           assertColor(element, 'color', 'rgb(128, 0, 128)');
 
           player.finish();
-          player.tick();
+          clock.flushQueue(); // since the player is not running, we cannot call tick
 
           expect(player.playState).toBe('finished');
           assertColor(element, 'color', 'rgb(0, 0, 0)');
@@ -697,7 +719,7 @@ describe('Player', () => {
           assertColor(element, 'color', 'rgb(128, 0, 128)');
 
           player.finish();
-          player.tick();
+          clock.flushQueue(); // since the player is not running, we cannot call tick
 
           assertColor(element, 'color', 'rgb(0, 0, 255)');
         });
@@ -790,7 +812,7 @@ describe('Player', () => {
         assertColor(element, 'color', 'rgb(128, 0, 128)');
 
         player.cancel();
-        player.tick();
+        clock.flushQueue(); // since the player is not running, we cannot call tick
 
         expect(player.playState).toBe('idle');
         assertColor(element, 'color', 'rgb(0, 0, 0)');
