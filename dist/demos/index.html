@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My Angular App</title>
+<style>
+.left, .right {
+  width:50%;
+  position:absolute;
+  top:0;
+  bottom:0;
+}
+.left {
+  left:0;
+  border-right:5px solid black;
+}
+.right {
+  right:0;
+  border-left:5px solid black;
+}
+#animate {
+  height: 150px;
+  width: 150px;
+  background-color: red;
+}
+nav {
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  padding:5px;
+  background:rgba(0,0,0,0.5);
+  z-index:1000;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <button id="play">Animate</button>
+</nav>
+
+<div class="left">
+  <div id="animate1"></div>
+</div>
+<div class="right">
+  <div id="animate2"></div>
+</div>
+
+
+<script type="text/javascript" src="../element-animate-polyfill.js"></script>
+<script>
+var button = document.getElementById('play');
+
+button.addEventListener('click', function() {
+  var el1 = document.getElementById('animate1');
+  var el2 = document.getElementById('animate2');
+  var animation = [
+    {height: "150px", transform: 'rotate(0deg)', background:'hsla(120,100%,50%,0.5)'},
+    {height: "400px", transform: 'rotate(360deg)', background:'rgba(255,100,0,0.2)'}
+  ];
+  var options = {
+    duration: 5000,
+    fill: 'forwards',
+    easing: 'cubic-bezier(0,-0.85,0,.69)'
+  };
+
+  el1.animate(animation, options);
+  window['$$elementAnimateFn'](el2, animation, options);
+});
+
+</script>
+<script>
+  document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] +
+  ':35729/livereload.js?snipver=1"></' + 'script>')
+</script>
+</body>
+</html>
