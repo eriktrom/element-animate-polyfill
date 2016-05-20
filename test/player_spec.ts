@@ -51,6 +51,22 @@ describe('Player', () => {
     return element;
   };
 
+  it('should not throw when animate is used on a real dom node', () => {
+    var element = el('div');
+    var keyframes = [
+      {opacity: 0 },
+      {opacity: 1}
+    ];
+
+    var options = {
+      duration: 1000
+    };
+
+    expect(() => {
+      element.animate(keyframes, options);
+    }).not.toThrow();
+  });
+
   describe('dimensional style properties', () => {
     they('should animate $prop', DIMENSIONAL_PROPERTIES, (prop) => {
       var unit = 'px';

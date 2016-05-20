@@ -8,7 +8,7 @@ delete webpackConfig.entry;
 module.exports = function(config) {
 
   config.set({
-    browsers : ['Chrome'],
+    browsers : ['Chrome', 'Safari'],
     frameworks: ['jasmine'],
     singleRun: true,
     autoWatch: false,
@@ -20,6 +20,7 @@ module.exports = function(config) {
 
     plugins: [
       require('karma-chrome-launcher'),
+      require('karma-safari-launcher'),
       require('karma-webpack'),
       require('karma-sourcemap-loader'),
       require('karma-jasmine')
