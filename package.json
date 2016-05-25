@@ -1,5 +1,6 @@
 {
   "name": "element-animate-polyfill",
+  "version": "0.0.1",
   "main": "dist/es6/index.js",
   "description": "Polyfill the animate api",
   "scripts": {
