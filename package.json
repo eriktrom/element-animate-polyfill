@@ -1,6 +1,27 @@
 {
   "title": "element-animate-polyfill",
-  "main": "dist/element-animate-polyfill.js",
+  "main": "dist/es6/index.js",
+  "description": "Polyfill the animate api",
+  "scripts": {
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "postinstall": "typings install",
+    "copy-files": "rm -fr ./dist; mkdir ./dist; cp -R ./src/demos ./dist/demos",
+    "demo": "npm run copy-files; npm run compile; open http://localhost:8888/demos/; http-server -p 8888 ./dist;",
+    "demo:watch": "node watch.js",
+    "test": "karma start",
+    "autotest": "karma start --auto-watch --no-single-run",
+    "bundle": "npm run copy-files; npm run compile",
+    "build": "./node_modules/.bin/ember build",
+    "pretest": "ember build",
+    "test:ci": "ember test --test-port=7000 --config-file=testem-sauce.json",
+    "start": "./node_modules/.bin/ember serve --port=7357",
+    "tsc": "tsc -p . --noEmit",
+    "tslint": "tslint ./packages/**/*.ts",
+    "vscode-build": "tslint -s ./.vscode/tslint-formatters -t vscode ./packages/**/*.ts; tsc -p . --noEmit",
+    "sauce:connect": "ember sauce:connect",
+    "sauce:disconnect": "ember sauce:disconnect"
+  },
   "dependencies": {
     "clone": "^1.0.2",
     "gulp": "^3.9.1",
@@ -12,23 +33,26 @@
     "karma-safari-launcher": "^1.0.0",
     "karma-sourcemap-loader": "^0.3.7",
     "karma-webpack": "^1.7.0",
-    "ts-loader": "^0.8.1",
-    "typescript": "^1.8.9",
-    "webpack": "^1.12.14"
-  },
-  "scripts": {
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "postinstall": "typings install",
-    "copy-files": "rm -fr ./dist; mkdir ./dist; cp -R ./src/demos ./dist/demos",
-    "demo": "npm run copy-files; npm run compile; open http://localhost:8888/demos/; http-server -p 8888 ./dist;",
-    "demo:watch": "node watch.js",
-    "test": "karma start",
-    "autotest": "karma start --auto-watch --no-single-run",
-    "bundle": "npm run copy-files; npm run compile"
+    "webpack": "^1.12.14",
+    "broccoli-concat": "^2.1.0",
+    "broccoli-funnel": "^1.0.1",
+    "broccoli-merge-trees": "^1.1.1",
+    "broccoli-stew": "^1.2.0",
+    "broccoli-typescript-compiler": "^0.6.0",
+    "emberjs-build": "^0.6.0",
+    "typescript": "next"
   },
   "devDependencies": {
     "fs-extra": "^0.26.7",
-    "livereload": "^0.4.1"
-  }
+    "livereload": "^0.4.1",
+    "ember-cli": "^2.4.2",
+    "tslint": "next",
+    "typescript": "next"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/angular/element-animate-polyfill.git"
+  },
+  "author": "Google",
+  "license": "MIT"
 }
