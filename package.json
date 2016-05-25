@@ -55,5 +55,13 @@
     "url": "https://github.com/angular/element-animate-polyfill.git"
   },
   "author": "Google",
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": [
+    "ember-addon"
+  ],
+  "ember-addon": {
+    "versionCompatibility": {
+      "ember": ">=2.3.0"
+    }
+  }
 }
