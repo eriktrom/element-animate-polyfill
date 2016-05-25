@@ -1,0 +1,5 @@
+export const NUMERICAL_PROPERTIES = [
+    'z-index',
+    'opacity'
+];
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibnVtZXJpY2FsX3Byb3BlcnRpZXMuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJudW1lcmljYWxfcHJvcGVydGllcy50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQSxPQUFPLE1BQU0sb0JBQW9CLEdBQUc7SUFDbEMsU0FBUztJQUNULFNBQVM7Q0FDVixDQUFDIiwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGNvbnN0IE5VTUVSSUNBTF9QUk9QRVJUSUVTID0gW1xuICAnei1pbmRleCcsXG4gICdvcGFjaXR5J1xuXTtcbiJdfQ==
